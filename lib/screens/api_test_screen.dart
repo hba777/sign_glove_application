@@ -10,47 +10,77 @@ class ApiTestScreen extends StatefulWidget {
 }
 
 class _ApiTestScreenState extends State<ApiTestScreen> {
-  String? _responseMessage;
+  String? _latestPrediction;
+  bool _isFetching = false;
 
-  Future<void> fetchData() async {
-    final url = Uri.parse('http://10.0.2.2:8000'); // For Android emulator use 10.0.2.2
+  // Function to fetch the latest prediction
+  Future<void> fetchLatestPrediction() async {
+    final url = Uri.parse('http://10.0.2.2:8000/latest_prediction'); // For Android emulator, use 10.0.2.2
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          _responseMessage = data['message'];
+          _latestPrediction = data['prediction']?.toString() ?? "No prediction available";
         });
       } else {
         setState(() {
-          _responseMessage = 'Error: ${response.statusCode}';
+          _latestPrediction = 'Error: ${response.statusCode}';
         });
       }
     } catch (e) {
       setState(() {
-        _responseMessage = 'Failed to fetch data: $e';
+        _latestPrediction = 'Failed to fetch data: $e';
       });
     }
+  }
+
+
+  // Polling function to repeatedly fetch data
+  void startFetching() {
+    if (_isFetching) return; // Prevent multiple polling loops
+    _isFetching = true;
+
+    // Periodic timer for polling
+    Future.doWhile(() async {
+      if (!_isFetching) return false; // Stop polling if _isFetching is false
+      await fetchLatestPrediction();
+      await Future.delayed(const Duration(seconds: 1)); // Poll every second
+      return true; // Continue polling
+    });
+  }
+
+  @override
+  void dispose() {
+    _isFetching = false; // Stop polling when the widget is disposed
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('API Test Screen'),
+        title: const Text('Prediction Viewer'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (_responseMessage != null)
-              Text(_responseMessage!)
+            if (_latestPrediction != null)
+              Text(
+                'Latest Prediction: $_latestPrediction',
+                style: const TextStyle(fontSize: 18),
+                textAlign: TextAlign.center,
+              )
             else
-              const Text('Press the button to fetch data'),
+              const Text(
+                'Press the button to start fetching predictions',
+                textAlign: TextAlign.center,
+              ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: fetchData,
-              child: const Text('Fetch Data'),
+              onPressed: startFetching,
+              child: const Text('Start Fetching Predictions'),
             ),
           ],
         ),
