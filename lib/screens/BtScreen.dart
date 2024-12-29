@@ -1,7 +1,9 @@
 import 'dart:developer';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:http/http.dart' as http;
 
 class BluetoothPage extends StatefulWidget {
   @override
@@ -19,10 +21,9 @@ class _BluetoothPageState extends State<BluetoothPage> {
   void initState() {
     super.initState();
     _scanForDevices();
-    requestPermissions(); // Ensure permissions are requested
+    requestPermissions();
   }
 
-  // Request Bluetooth permissions
   Future<void> requestPermissions() async {
     final statuses = await [
       Permission.bluetooth,
@@ -37,7 +38,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
     }
   }
 
-  // Scan for Bluetooth devices
   Future<void> _scanForDevices() async {
     FlutterBluePlus.startScan(timeout: Duration(seconds: 5));
 
@@ -52,15 +52,12 @@ class _BluetoothPageState extends State<BluetoothPage> {
     });
   }
 
-  // Connect to the Bluetooth device and set up notifications
   Future<void> connectToDevice(BluetoothDevice device) async {
     setState(() {
       connectedDevice = device;
     });
 
     await device.connect();
-
-    // After connecting, query the name explicitly
     String deviceName = await device.name;
     print("Connected to $deviceName");
 
@@ -73,14 +70,10 @@ class _BluetoothPageState extends State<BluetoothPage> {
             characteristic = char;
           });
 
-          // Enable notifications to continuously receive data
           await char.setNotifyValue(true);
           char.value.listen((data) {
-            // Log raw data to check if it's being received
             log('Received Raw Data: ${String.fromCharCodes(data)}');
-
             setState(() {
-              // Concatenate the received data to the existing string
               receivedData += String.fromCharCodes(data);
               _processData(receivedData);
             });
@@ -90,12 +83,9 @@ class _BluetoothPageState extends State<BluetoothPage> {
     }
   }
 
-  // Process received data and break it into sets of Flex, Accel, and Gyro readings
-  void _processData(String data) {
-    // Log the entire received data to see what's coming in
+  void _processData(String data) async {
     log('Full Data: $data');
 
-    // Extract Flex, Accel, and Gyro data using regular expressions
     final flexPattern = RegExp(r'Flex:([-\d,]+)');
     final accelPattern = RegExp(r'Accel:([-\d,]+)');
     final gyroPattern = RegExp(r'Gyro:([-\d,]+)');
@@ -109,7 +99,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
       final accelData = accelMatch.group(1)?.split(',').map((e) => double.tryParse(e.trim())).toList() ?? [];
       final gyroData = gyroMatch.group(1)?.split(',').map((e) => double.tryParse(e.trim())).toList() ?? [];
 
-      // Ensure the data has exactly 5 Flex, 3 Accel, and 3 Gyro readings
       if (flexData.length == 5 && accelData.length == 3 && gyroData.length == 3) {
         final parsedData = {
           'Flex': flexData,
@@ -117,15 +106,39 @@ class _BluetoothPageState extends State<BluetoothPage> {
           'Gyro': gyroData,
         };
 
-        // Add the parsed data to the list
         parsedDataList.add(parsedData);
-
-        // Reset the received data to start fresh for the next set
         receivedData = '';
         log('Parsed Data: $parsedData');
+
+        // Send parsed data to the backend
+        await _sendToBackend(parsedData);
       }
     } else {
       log('Data did not match the expected pattern');
+    }
+  }
+
+  Future<void> _sendToBackend(Map<String, dynamic> data) async {
+    final url = Uri.parse('http://10.0.2.2:8000/predict/');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        log('Prediction: ${responseData['prediction']}');
+        setState(() {
+          parsedDataList.last['Prediction'] = responseData['prediction'];
+        });
+      } else {
+        log('Error from backend: ${response.body}');
+      }
+    } catch (e) {
+      log('Error sending data to backend: $e');
     }
   }
 
@@ -135,7 +148,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
       appBar: AppBar(title: const Text('Bluetooth JDY-31')),
       body: Column(
         children: [
-          // Display available Bluetooth devices
           Expanded(
             child: ListView.builder(
               itemCount: devices.length,
@@ -150,7 +162,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
             ),
           ),
           const Divider(),
-          // Display the received parsed data
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -164,6 +175,8 @@ class _BluetoothPageState extends State<BluetoothPage> {
                         Text('Flex: ${data['Flex']?.join(', ') ?? "N/A"}', style: TextStyle(fontSize: 16)),
                         Text('Accel: ${data['Accel']?.join(', ') ?? "N/A"}', style: TextStyle(fontSize: 16)),
                         Text('Gyro: ${data['Gyro']?.join(', ') ?? "N/A"}', style: TextStyle(fontSize: 16)),
+                        if (data['Prediction'] != null)
+                          Text('Prediction: ${data['Prediction']}', style: TextStyle(fontSize: 16, color: Colors.green)),
                       ],
                     );
                   }).toList(),

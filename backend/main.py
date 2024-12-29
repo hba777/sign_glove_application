@@ -1,46 +1,36 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List
 import pickle
-import os
+import numpy as np
 
+# Load the trained Random Forest model
+model = pickle.load(open("rf_model.pkl", "rb"))
+
+# Initialize the FastAPI app
 app = FastAPI()
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Adjust for specific origins in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Define the request schema using Pydantic
+class SensorData(BaseModel):
+    Flex: List[int]
+    Accel: List[float]
+    Gyro: List[float]
 
-# Path to the model file
-model_path = os.path.join(os.path.dirname(__file__), "rf_model.pkl")
+# Define the prediction route
+@app.post("/predict/")
+async def predict(data: SensorData):
+    try:
+        # Combine the input data into a single feature vector
+        feature_vector = data.Flex + data.Accel + data.Gyro
+        feature_vector = np.array(feature_vector).reshape(1, -1)
 
-# Load the pickle file
-try:
-    with open(model_path, "rb") as file:
-        model = pickle.load(file)
-    print("Model loaded successfully:", model)
-except FileNotFoundError:
-    print(f"Error: Model file not found at {model_path}")
-    model = None
-except pickle.UnpicklingError:
-    print("Error: Failed to unpickle the model file. Please check the file format.")
-    model = None
+        # Perform the prediction
+        prediction = model.predict(feature_vector)
 
-@app.get("/")
-def read_root():
-    if model:
-        return {"message": f"Model loaded: {model['name']}"}
-    else:
-        return {"message": "No model loaded."}
+        # Return the prediction as a response
+        return {"prediction": prediction.tolist()}
+    except Exception as e:
+        return {"error": str(e)}
 
-# Define the /latest_prediction endpoint
-@app.get("/latest_prediction")
-def latest_prediction():
-    if model:
-        # Replace with actual model prediction logic
-        return {"prediction": "This is a dummy prediction."}
-    else:
-        return {"error": "Model not loaded"}
+# Run the server
+# To run the app, use: uvicorn main:app --host 0.0.0.0 --port 8000
