@@ -1,4 +1,5 @@
 # Miscellaneous
+.model/.venv
 *.class
 *.log
 *.pyc

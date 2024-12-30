@@ -235,7 +235,8 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(height: mq.height *.28,),
               ElevatedButton(
                 onPressed: () {
-                  flutterTts.speak(predictedLabel); // Speak the label on button press
+                  String sanitizedLabel = predictedLabel.replaceAll('_', ' '); // Replace underscores with spaces
+                  flutterTts.speak(sanitizedLabel); // Speak the sanitized label
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(mq.width *.5, mq.height *.06),

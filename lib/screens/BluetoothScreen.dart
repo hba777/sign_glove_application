@@ -35,7 +35,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
       setState(() {
         connectedDevice = null;
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Disconnected from device")));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Disconnected from device")));
     }
   }
 
@@ -53,7 +53,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
           _pageController.jumpToPage(index);
         },
       ),
-      CommunicationScreen()
+      const CommunicationScreen()
     ];
 
     return Scaffold(
@@ -63,6 +63,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
         children: List.generate(bottomBarPages.length, (index) => bottomBarPages[index]),
       ),
       bottomNavigationBar: AnimatedNotchBottomBar(
+        circleMargin: mq.width *.07,
         onTap: (index) {
           if (connectedDevice != null) {
             disconnectDevice(); // Disconnect the device before navigating
@@ -70,19 +71,22 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
           _pageController.jumpToPage(index); // Navigate to the selected page
         },
         notchBottomBarController: _controller,
-        bottomBarItems: const [
+        bottomBarItems: [
           BottomBarItem(
-            inActiveItem: Icon(
+            inActiveItem: const Icon(
               Icons.home_filled,
               color: Colors.lightGreen,
             ),
-            activeItem: Icon(
+            activeItem: const Icon(
               Icons.home_filled,
               color: Colors.lightGreenAccent,
             ),
-            itemLabelWidget: Text('Home',style: TextStyle(color: Colors.white),)
+            itemLabelWidget: Padding(
+              padding:EdgeInsets.only(left: mq.width *.02),
+              child: const Text('Home',style: TextStyle(color: Colors.white),),
+            )
           ),
-          BottomBarItem(
+          const BottomBarItem(
             inActiveItem: Icon(
               Icons.chat_bubble_outline,
               color: Colors.lightGreen,
@@ -94,8 +98,8 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
               itemLabelWidget: Text('Signs',style: TextStyle(color: Colors.white),)
           ),
         ],
-        kIconSize: 14,
-        kBottomRadius: 14,
+        kIconSize: 17,
+        kBottomRadius: 24,
         color: Colors.black45,
         notchColor: Colors.black,
       ),
