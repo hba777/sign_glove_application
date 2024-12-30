@@ -74,28 +74,30 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
           BottomBarItem(
             inActiveItem: Icon(
               Icons.home_filled,
-              color: Colors.blueGrey,
+              color: Colors.lightGreen,
             ),
             activeItem: Icon(
               Icons.home_filled,
-              color: Colors.blueAccent,
+              color: Colors.lightGreenAccent,
             ),
-            itemLabel: 'Home',
+            itemLabelWidget: Text('Home',style: TextStyle(color: Colors.white),)
           ),
           BottomBarItem(
             inActiveItem: Icon(
               Icons.chat_bubble_outline,
-              color: Colors.blueGrey,
+              color: Colors.lightGreen,
             ),
             activeItem: Icon(
               Icons.chat_bubble_outline,
-              color: Colors.blueAccent,
+              color: Colors.lightGreenAccent,
             ),
-            itemLabel: 'Signs',
+              itemLabelWidget: Text('Signs',style: TextStyle(color: Colors.white),)
           ),
         ],
         kIconSize: 14,
         kBottomRadius: 14,
+        color: Colors.black45,
+        notchColor: Colors.black,
       ),
     );
   }

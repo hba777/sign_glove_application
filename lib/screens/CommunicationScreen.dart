@@ -44,54 +44,66 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Communication Screen'),
+        title: Text('Communication Screen',
+          style: TextStyle(
+              fontSize: mq.width * .06
+          ),),
       ),
       body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              // TextField for searching images
-              SizedBox(
-                width: mq.width *.8,
-                height: mq.height * .07,
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: 'Search',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(mq.width *.04)
-                    ),
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            // TextField for searching images
+            SizedBox(
+              width: mq.width * .8,
+              height: mq.height * .07,
+              child: TextField(
+                controller: _searchController,
+                style: TextStyle(color: Colors.white),
+                cursorColor: Colors.white, // Set cursor color to white
+                decoration: InputDecoration(
+                  focusColor: Colors.white, // Ensures the focus color is white
+                  labelStyle: const TextStyle(color: Colors.white),
+                  labelText: 'Search',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(mq.width * .04),
+                  ),
+                  focusedBorder: OutlineInputBorder( // When the TextField is focused
+                    borderRadius: BorderRadius.circular(mq.width * .04),
+                    borderSide: BorderSide(color: Colors.white, width: 2.0), // White border when focused
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              // Grid view to display images
-              Expanded(
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, // 2 columns
-                    crossAxisSpacing: 24.0,
-                    mainAxisSpacing: 8.0,
-                  ),
-                  itemCount: _filteredImageNames.length,
-                  itemBuilder: (context, index) {
-                    String imageName = _filteredImageNames[index];
-                    return GridTile(
-                      child: Container(
-                        width: mq.width * 0.4, // Adjust width for zoom out
-                        height: mq.width * 0.8, // Adjust height to maintain aspect ratio
-                        child: Image.asset(
-                          'assets/images/$imageName',
-                          fit: BoxFit.cover,
-                        ),
+            ),
+
+            const SizedBox(height: 10),
+            // Grid view to display images
+            Expanded(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, // 2 columns
+                  crossAxisSpacing: 24.0,
+                  mainAxisSpacing: 8.0,
+                ),
+                itemCount: _filteredImageNames.length,
+                itemBuilder: (context, index) {
+                  String imageName = _filteredImageNames[index];
+                  return GridTile(
+                    child: SizedBox(
+                      width: mq.width * 0.4, // Adjust width for zoom out
+                      height: mq.width * 0.8, // Adjust height to maintain aspect ratio
+                      child: Image.asset(
+                        'assets/images/Alphabets/$imageName', // Updated path
+                        fit: BoxFit.contain,
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 }

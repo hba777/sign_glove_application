@@ -142,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // After the 3-second delay, post the data and speak the label
         Future.delayed(Duration(seconds: 3), () async {
-          await flutterTts.speak(predictedLabel); // Speak the label
+          //await flutterTts.speak(predictedLabel); // Speak the label
         });
       } else {
         print("Error: ${response.statusCode}, ${response.body}");
@@ -205,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 _scanForDevices();
               },
-              child: const Icon(Icons.refresh),
+              child: const Icon(Icons.refresh, color: Colors.lightGreenAccent,),
             ),
           )
         ],
@@ -215,25 +215,33 @@ class _HomeScreenState extends State<HomeScreen> {
           // Display the name of the device if available
           if (devices.isNotEmpty) ...[
             ListTile(
-              title: Text(devices.first.name.isEmpty ? "Unknown Device" : devices.first.name),
-              subtitle: Text(devices.first.id.toString()),
+              title: Text(devices.first.name.isEmpty ? "Unknown Device" : devices.first.name, style: TextStyle(color: Colors.white),),
+              subtitle: Text(devices.first.id.toString(), style: TextStyle(color: Colors.white),),
               onTap: () => connectToDevice(devices.first),
             ),
           ] else ...[
-            Text('No devices found'),
+            const Text('No devices found',style: TextStyle(color: Colors.white)),
           ],
           const Divider(),
           // Display the received parsed data
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Label:', style: TextStyle(fontSize: mq.width * .04, fontWeight: FontWeight.bold)),
-              Text(predictedLabel, style: TextStyle(fontSize: mq.width * .07)),
+              SizedBox(height: mq.height *.03,),
+
+              Text('Word:', style: TextStyle(fontSize: mq.width * .04, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(predictedLabel, style: TextStyle(fontSize: mq.width * .07, color: Colors.lightGreenAccent)),
+              SizedBox(height: mq.height *.28,),
               ElevatedButton(
                 onPressed: () {
                   flutterTts.speak(predictedLabel); // Speak the label on button press
                 },
-                child: Text("Speak Label"),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(mq.width *.5, mq.height *.06),
+                  backgroundColor: Colors.black12
+                ),
+                child: const Text("Speak", style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
