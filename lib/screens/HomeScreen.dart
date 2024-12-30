@@ -7,12 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_tts/flutter_tts.dart'; // Import the text-to-speech package
 
 import '../main.dart';
 
 class HomeScreen extends StatefulWidget {
-  final NotchBottomBarController? controller;
-  const HomeScreen({super.key, this.controller});
+  final NotchBottomBarController controller;
+  final Function onNavigate; // Added callback to handle navigation
+  const HomeScreen({super.key, required this.controller, required this.onNavigate});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -25,12 +27,22 @@ class _HomeScreenState extends State<HomeScreen> {
   String receivedData = '';
   List<Map<String, dynamic>> parsedDataList = [];
   var predictedLabel = '';
+  final FlutterTts flutterTts = FlutterTts(); // Initialize text-to-speech instance
 
   @override
   void initState() {
     super.initState();
     _scanForDevices();
     requestPermissions(); // Ensure permissions are requested
+    flutterTts.setLanguage("en-US"); // Set the language for TTS
+    flutterTts.setSpeechRate(0.5); // Optional: adjust the speech rate
+  }
+
+  @override
+  void dispose() {
+    // Ensure the Bluetooth device is disconnected when the screen is disposed
+    disconnectDevice();
+    super.dispose();
   }
 
   // Request Bluetooth permissions
@@ -48,13 +60,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Function to disconnect from the Bluetooth device
+  Future<void> disconnectDevice() async {
+    if (connectedDevice != null) {
+      await connectedDevice?.disconnect();
+      setState(() {
+        connectedDevice = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Disconnected from device")));
+    }
+  }
+
   // Scan for Bluetooth devices
   Future<void> _scanForDevices() async {
     FlutterBluePlus.startScan(timeout: Duration(seconds: 5));
 
     FlutterBluePlus.scanResults.listen((results) {
       for (var result in results) {
-        if (!devices.contains(result.device)) {
+        // Only add devices whose name contains "JDY-31-SPP"
+        if (result.device.name.contains('JDY-31-SPP') && !devices.contains(result.device)) {
           // Check if the widget is still mounted before calling setState
           if (mounted) {
             setState(() {
@@ -65,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
   }
+
   // Connect to the Bluetooth device and set up notifications
   Future<void> connectToDevice(BluetoothDevice device) async {
     setState(() {
@@ -114,6 +139,11 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           predictedLabel = label;
         });
+
+        // After the 3-second delay, post the data and speak the label
+        Future.delayed(Duration(seconds: 3), () async {
+          await flutterTts.speak(predictedLabel); // Speak the label
+        });
       } else {
         print("Error: ${response.statusCode}, ${response.body}");
       }
@@ -147,8 +177,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
         parsedDataList.clear();
         parsedDataList.add(parsedData);
-        _postDataToServer(parsedData);
-        receivedData = '';
+
+        // Ensure widget is still mounted before calling setState
+        if (mounted) {
+          _postDataToServer(parsedData);
+          setState(() {
+            receivedData = '';
+          });
+        }
       } else {
         log('Accel and/or Gyro data does not have exactly 3 readings.');
       }
@@ -156,12 +192,24 @@ class _HomeScreenState extends State<HomeScreen> {
       log('Data did not match the expected pattern');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-        title: Text('Communication Screen'),
-    ),
+      appBar: AppBar(
+        title: Text('Home Screen', style: TextStyle(fontSize: mq.width * .06)),
+        actions: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: mq.width * .035),
+            child: InkWell(
+              onTap: () {
+                _scanForDevices();
+              },
+              child: const Icon(Icons.refresh),
+            ),
+          )
+        ],
+      ),
       body: Column(
         children: [
           // Display the name of the device if available
@@ -176,16 +224,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
           const Divider(),
           // Display the received parsed data
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Label:', style: TextStyle(fontSize: mq.width *.04, fontWeight: FontWeight.bold)),
-                  Text(predictedLabel, style: TextStyle(fontSize: mq.width *.07)),
-                ],
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Label:', style: TextStyle(fontSize: mq.width * .04, fontWeight: FontWeight.bold)),
+              Text(predictedLabel, style: TextStyle(fontSize: mq.width * .07)),
+              ElevatedButton(
+                onPressed: () {
+                  flutterTts.speak(predictedLabel); // Speak the label on button press
+                },
+                child: Text("Speak Label"),
               ),
-            ),
+            ],
           ),
         ],
       ),
