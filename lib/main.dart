@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sign_glove_application/screens/BtScreen.dart';
+import 'package:sign_glove_application/screens/BluetoothScreen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: BluetoothPage(),
+      home: BluetoothScreen(),
     );
   }
 }

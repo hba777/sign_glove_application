@@ -14,12 +14,16 @@
     <uses-feature android:name="android.hardware.bluetooth" android:required="true" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
 
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
         android:label="sign_glove_application"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
-        <activity
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
+
+    <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
