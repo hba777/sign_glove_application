@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sign_glove_application/screens/BluetoothScreen.dart';
 
+late Size mq;
+
 void main() {
   runApp(const MyApp());
 }
