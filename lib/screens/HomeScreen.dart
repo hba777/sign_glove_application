@@ -51,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
       Permission.bluetooth,
       Permission.bluetoothConnect,
       Permission.bluetoothScan,
+      Permission.locationWhenInUse
     ].request();
 
     if (statuses.values.every((status) => status.isGranted)) {
@@ -123,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _postDataToServer(Map<String, dynamic> data) async {
-    final url = Uri.parse('https://fa07-38-7-191-243.ngrok-free.app/predict'); // Replace with your FastAPI server URL
+    final url = Uri.parse('https://5ce7-2401-ba80-aa16-a3b2-3433-68-ea62-e6da.ngrok-free.app/predict'); // Replace with your FastAPI server URL
     try {
       final response = await http.post(
         url,
